@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@chrisoakman/chessboardjs": "^1.0.0",
+    "chess.js": "^1.2.0",
+    "tsc": "^2.0.4"
+    "stockfish": "^15.0.0"
+  }
+}
