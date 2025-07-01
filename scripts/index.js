@@ -22,8 +22,8 @@ var time = timeSelector.value
 const whiteTimerElement = document.querySelector("#white-timer")
 const blackTimerElement = document.querySelector("#black-timer")
 
-const whiteTimer = new Timer()
-const blackTimer = new Timer()
+const stockfishTimer = new Timer()
+const humanTimer = new Timer()
 
 const restartButton = document.querySelector('#restart-btn')
 const flipBoardButton = document.querySelector('#flip-btn')
@@ -41,7 +41,8 @@ const getUserDifficulty = () => {
     difficulty = difficultySelector.value
 }
 
-const refreshTimers = () => {
+const refreshTimers = () => 
+{
     whiteTimerElement.textContent = Timer.formatInputTime(timeSelector.value)
     blackTimerElement.textContent = Timer.formatInputTime(timeSelector.value)
 }
@@ -99,8 +100,8 @@ const makeStockfishMove = async (move) => {
         board.position(chess.fen())
         updateStatus()
         turn = 'human'
-        blackTimer.stop()
-        whiteTimer.start()
+        stockfishTimer.stop()
+        humanTimer.start()
     }
     catch (error) {
         return 'snapback'
@@ -136,8 +137,8 @@ const onDrop = (source, target) => {
 const onSnapEnd = () => {
     board.position(chess.fen())
     turn = 'stockfish'
-    whiteTimer.stop()
-    blackTimer.start()
+    humanTimer.stop()
+    stockfishTimer.start()
     updateStatus()
     requestEngineMove()
 }
@@ -192,9 +193,9 @@ restartButton.addEventListener('click', () => {
     chess.reset()
     board.orientation() === 'white' ? turn = 'human' : turn = 'stockfish'
 
-    if (turn === 'stockfish') 
+    if(turn === 'stockfish')
     {
-        hasGameStarted = false
+        requestEngineMove()
     }
 
     board.position('start')
@@ -236,7 +237,7 @@ startGameButton.addEventListener('click', () => {
     else if(userOrientation == 'black')
     {
         turn = 'stockfish'
-        blackTimer.start()
+        stockfishTimer.start()
         requestEngineMove()
     }
 
@@ -255,9 +256,19 @@ timeSelector.addEventListener('change', () => {
     refreshTimers()
 })
 
-const setupTimers = () => {
-    whiteTimer.set(timeSelector.value, whiteTimerElement, timeEnded)
-    blackTimer.set(timeSelector.value, blackTimerElement, timeEnded)
+const setupTimers = () => 
+{
+    if(board.orientation === 'white')
+    {
+
+        humanTimer.set(timeSelector.value, whiteTimerElement, timeEnded)
+        stockfishTimer.set(timeSelector.value, blackTimerElement, timeEnded)
+    }
+    else
+    {
+        stockfishTimer.set(timeSelector.value, whiteTimerElement, timeEnded)
+        humanTimer.set(timeSelector.value, blackTimerElement, timeEnded)
+    }
 }
 
 initGame()
