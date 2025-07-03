@@ -1,11 +1,13 @@
 export class Timer{
 
-    constructor(){
+    constructor(name){
+        this.name = name
         this.time = 0
         this.element = null
-        this.control = true
+        this.control = false
         this.callback = null
         this.timeLimit = 10
+        this.timeoutID = null
     }
 
     set(time, element, callback = null)
@@ -23,8 +25,8 @@ export class Timer{
     start()
     {
         this.control = true
-
-        setTimeout(() => {
+        console.log("Timer started for: " + this.name)
+        this.timeoutID = setTimeout(() => {
             this.countDown()
         }, 1000)
     }
@@ -96,16 +98,18 @@ export class Timer{
         }
         else
         {
-            setTimeout(() => {
+            this.timeoutID = setTimeout(() => {
                 this.countDown()
             }, 1000)
             this.time--
+            console.log("countdown called")
         }
     }
 
     stop()
     {
         this.control = false
+        clearTimeout(this.timeoutID)
     }
 
 }

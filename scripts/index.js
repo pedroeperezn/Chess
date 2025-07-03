@@ -11,23 +11,24 @@ var board = null
 var turn = null
 var stockfishMove = null
 var hasGameStarted = false
+var isGamePaused = false
 
 const difficultySelector = document.querySelector('#select-difficulty')
 var difficulty = difficultySelector.value
 const orientationSelector = document.querySelector('#select-position')
 var userOrientation = orientationSelector.value
 const timeSelector = document.querySelector('#select-time')
-var time = timeSelector.value
 
 const whiteTimerElement = document.querySelector("#white-timer")
 const blackTimerElement = document.querySelector("#black-timer")
 
-const stockfishTimer = new Timer()
-const humanTimer = new Timer()
+const stockfishTimer = new Timer("StockTimer")
+const humanTimer = new Timer("HumanTimer")
 
-const restartButton = document.querySelector('#restart-btn')
 const flipBoardButton = document.querySelector('#flip-btn')
 const startGameButton = document.querySelector('#start-btn')
+const pauseButton = document.querySelector('#pause-btn')
+const resignButton = document.querySelector('#resign-btn')
 
 var $status = $('#status')
 var $fen = $('#fen')
@@ -114,7 +115,7 @@ const onDragStart = (source, piece, position, orientation) => {
         return false
     }
 
-    if (!(turn === 'human') || !hasGameStarted) 
+    if (!(turn === 'human') || !hasGameStarted || isGamePaused) 
     {
         return false
     }
@@ -152,8 +153,10 @@ const updateStatus = () => {
         moveColor = 'Black'
     }
 
-    if (chess.isCheckmate()) {
+    if (chess.isCheckmate()) 
+    {
         status = 'Game over, ' + moveColor + ' is in checkmate.'
+        endGame()
     }
     else if (chess.isDraw()) {
         status = 'Game over, drawn position'
@@ -186,21 +189,6 @@ const initGame = () =>
     turn = 'human'
 }
 
-restartButton.addEventListener('click', () => {
-    refreshTimers()
-    setupTimers()
-    
-    chess.reset()
-    board.orientation() === 'white' ? turn = 'human' : turn = 'stockfish'
-
-    if(turn === 'stockfish')
-    {
-        requestEngineMove()
-    }
-
-    board.position('start')
-    updateStatus()
-})
 
 difficultySelector.addEventListener('change', () => {
     difficulty = difficultySelector.value
@@ -211,11 +199,13 @@ flipBoardButton.addEventListener('click', () => {
 })
 
 startGameButton.addEventListener('click', () => {
-    
+
+    stopTimers()
+
     if(hasGameStarted)
     {
-        console.log("Game had already started")
-        return
+        refreshTimers()
+        chess.reset()
     }
 
     getUserDifficulty()
@@ -228,11 +218,12 @@ startGameButton.addEventListener('click', () => {
 
     board.orientation(userOrientation)
     setupTimers()
+    board.position('start')
 
     if(userOrientation === 'white')
     {
         turn = 'human'
-        whiteTimer.start()
+        humanTimer.start()
     }
     else if(userOrientation == 'black')
     {
@@ -242,6 +233,22 @@ startGameButton.addEventListener('click', () => {
     }
 
     hasGameStarted = true
+    updateStatus()
+})
+
+pauseButton.addEventListener('click', () => {
+    if(!isGamePaused)
+    {
+        pauseButton.innerHTML = 'Resume Game'
+        isGamePaused = true
+        stopTimers()
+    }
+    else
+    {
+        pauseButton.innerHTML = 'Pause Game'
+        isGamePaused = false
+        resumeTimers()
+    }
 })
 
 const timeEnded = () => {
@@ -256,11 +263,11 @@ timeSelector.addEventListener('change', () => {
     refreshTimers()
 })
 
+// TODO: Check timer setup for human turn. When I restart the game as human being white the timer starts counting at double speed. Maybe it's not being stopped properly. 
 const setupTimers = () => 
 {
-    if(board.orientation === 'white')
+    if(board.orientation() === 'white')
     {
-
         humanTimer.set(timeSelector.value, whiteTimerElement, timeEnded)
         stockfishTimer.set(timeSelector.value, blackTimerElement, timeEnded)
     }
@@ -268,6 +275,24 @@ const setupTimers = () =>
     {
         stockfishTimer.set(timeSelector.value, whiteTimerElement, timeEnded)
         humanTimer.set(timeSelector.value, blackTimerElement, timeEnded)
+    }
+}
+
+const stopTimers = () => 
+{
+    humanTimer.stop()
+    stockfishTimer.stop()
+}
+
+const resumeTimers = () =>
+{
+    if(turn === 'stockfish')
+    {
+        stockfishTimer.start()
+    }
+    else
+    {
+        humanTimer.start()
     }
 }
 
